@@ -19,6 +19,11 @@
       white-space: pre-wrap;
       word-wrap: break-word;
     }
+    .note {
+      color: #666;
+      font-size: 0.9em;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -28,6 +33,8 @@
     <input type="text" id="urlInput" name="urlInput" placeholder="https://example.com" required>
     <button type="submit">Fetch Source</button>
   </form>
+  <div class="note">Note: Some websites may block this request due to security settings.</div>
+  
   <h2>Source Code:</h2>
   <pre id="output">Enter a URL and click "Fetch Source" to view the HTML source code.</pre>
   <button id="downloadBtn" style="display:none;">Download Source Code</button>
@@ -42,16 +49,27 @@
       downloadBtn.style.display = 'none';
 
       try {
-        const response = await fetch(url);
+        // Use CORS proxy
+        const proxyUrl = 'https://api.allorigins.win/get?url=';
+        const encodedUrl = encodeURIComponent(url);
+        
+        const response = await fetch(proxyUrl + encodedUrl);
+        
         if (!response.ok) {
-          output.textContent = 'Error fetching the URL. Status: ' + response.status;
+          output.textContent = `Error: ${response.status} - ${response.statusText}`;
           return;
         }
-        const text = await response.text();
-        output.textContent = text;
-        downloadBtn.style.display = 'inline-block';
+
+        const data = await response.json();
+        
+        if (data.contents) {
+          output.textContent = data.contents;
+          downloadBtn.style.display = 'inline-block';
+        } else {
+          output.textContent = 'No content available';
+        }
       } catch (error) {
-        output.textContent = 'Error: ' + error;
+        output.textContent = 'Error: ' + error.message;
       }
     });
 

@@ -40,19 +40,15 @@
   <button id="downloadBtn" style="display:none;">Download Source Code</button>
 
   <script>
-    document.getElementById('urlForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const url = document.getElementById('urlInput').value;
+    async function fetchSourceCode(url) {
       const output = document.getElementById('output');
       const downloadBtn = document.getElementById('downloadBtn');
       output.textContent = 'Loading...';
       downloadBtn.style.display = 'none';
 
       try {
-        // Use CORS proxy
         const proxyUrl = 'https://api.allorigins.win/get?url=';
         const encodedUrl = encodeURIComponent(url);
-        
         const response = await fetch(proxyUrl + encodedUrl);
         
         if (!response.ok) {
@@ -61,7 +57,6 @@
         }
 
         const data = await response.json();
-        
         if (data.contents) {
           output.textContent = data.contents;
           downloadBtn.style.display = 'inline-block';
@@ -71,8 +66,26 @@
       } catch (error) {
         output.textContent = 'Error: ' + error.message;
       }
+    }
+
+    // Form submission handler
+    document.getElementById('urlForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const url = document.getElementById('urlInput').value;
+      await fetchSourceCode(url);
     });
 
+    // Check for URL parameter on page load
+    window.addEventListener('load', function() {
+      const params = new URLSearchParams(window.location.search);
+      const urlParam = params.get('url');
+      if (urlParam) {
+        document.getElementById('urlInput').value = urlParam;
+        fetchSourceCode(urlParam);
+      }
+    });
+
+    // Download handler
     document.getElementById('downloadBtn').addEventListener('click', function() {
       const text = document.getElementById('output').textContent;
       const blob = new Blob([text], { type: 'text/plain' });
